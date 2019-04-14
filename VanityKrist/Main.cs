@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using System.Diagnostics;
 
 namespace VanityKrist
 {
@@ -28,10 +24,13 @@ namespace VanityKrist
         Random random = new Random();
         private bool started = false;
         private bool check = false;
-        private bool breakpls = false;
         private string regex = "";
         private ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
         private TextWriter output = TextWriter.Synchronized(File.AppendText("output.txt"));
+
+        private CancellationTokenSource cts = new CancellationTokenSource();
+
+        private int counter = 0;
 
         private void Term_TextChanged(object sender, EventArgs e) => term = Term.Text.Replace(" ", "").ToLower();
 
@@ -51,7 +50,6 @@ namespace VanityKrist
                 Output.AppendText("Already started!\n");
                 return;
             }
-            breakpls = false;
             started = true;
 
             Term.Enabled = false;
@@ -65,14 +63,17 @@ namespace VanityKrist
 
             for (int i = 0; i < threads; i++)
             {
-                var t = new Task(MinerThread, TaskCreationOptions.LongRunning);
-                t.Start();
+                new Task(() => MinerThread(cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
             }
-    }
+
+            new Task(() => UpdateCounter(cts.Token), TaskCreationOptions.LongRunning).Start();
+
+        }
 
         private void Stop_Click(object sender, EventArgs e)
         {
-            breakpls = true;
+            cts.Cancel();
+            cts = new CancellationTokenSource();
             started = false;
 
             Stop.Enabled = false;
@@ -85,13 +86,13 @@ namespace VanityKrist
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = "";
 
-        private async void MinerThread()
+        private async void MinerThread(CancellationToken token)
         {
             Regex reg = null;
             if (regex != "") reg = new Regex(regex);
             while (true)
             {
-                if (breakpls == true) break;
+                if (token.IsCancellationRequested) break;
                 char[] stringChars = new char[16];
                 while (true)
                 {
@@ -107,6 +108,7 @@ namespace VanityKrist
                 queue.Enqueue(pkey);
 
                 var address = (await KristMethods.MakeV2Address(pkey)).ToLower();
+                counter++;
                 if (check)
                 {
                     Find(address, pkey, reg);
@@ -116,6 +118,18 @@ namespace VanityKrist
                     Find(address, pkey, reg);
                 }
             }
+        }
+
+        private async void UpdateCounter(CancellationToken token)
+        {
+            while (true)
+            {
+                if (token.IsCancellationRequested) break;
+                Output.Invoke(new Action(() =>  Addresses.Text = counter.ToString()));
+                counter = 0;
+                await Task.Delay(1000);
+            }
+
         }
 
         private bool IsIn(ConcurrentQueue<string> queue, string obj)

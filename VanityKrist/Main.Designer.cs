@@ -40,6 +40,8 @@
             this.Clear = new System.Windows.Forms.Button();
             this.Regex = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.Addresses = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // label1
@@ -123,9 +125,9 @@
             // 
             // Clear
             // 
-            this.Clear.Location = new System.Drawing.Point(122, 396);
+            this.Clear.Location = new System.Drawing.Point(238, 399);
             this.Clear.Name = "Clear";
-            this.Clear.Size = new System.Drawing.Size(75, 23);
+            this.Clear.Size = new System.Drawing.Size(75, 20);
             this.Clear.TabIndex = 9;
             this.Clear.Text = "Clear";
             this.Clear.UseVisualStyleBackColor = true;
@@ -148,11 +150,30 @@
             this.label3.TabIndex = 11;
             this.label3.Text = "Regex";
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(12, 403);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(96, 13);
+            this.label4.TabIndex = 12;
+            this.label4.Text = "Addresses/second";
+            // 
+            // Addresses
+            // 
+            this.Addresses.Enabled = false;
+            this.Addresses.Location = new System.Drawing.Point(114, 399);
+            this.Addresses.Name = "Addresses";
+            this.Addresses.Size = new System.Drawing.Size(100, 20);
+            this.Addresses.TabIndex = 13;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(325, 431);
+            this.Controls.Add(this.Addresses);
+            this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.Regex);
             this.Controls.Add(this.Clear);
@@ -165,6 +186,7 @@
             this.Controls.Add(this.Start);
             this.Controls.Add(this.label1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "Main";
             this.Text = "VanityKrist";
             this.ResumeLayout(false);
@@ -185,6 +207,8 @@
         private System.Windows.Forms.Button Clear;
         private System.Windows.Forms.TextBox Regex;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.TextBox Addresses;
     }
 }
 
