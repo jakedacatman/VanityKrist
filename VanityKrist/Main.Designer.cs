@@ -83,7 +83,7 @@
             // 
             // Threads
             // 
-            this.Threads.Location = new System.Drawing.Point(146, 49);
+            this.Threads.Location = new System.Drawing.Point(164, 49);
             this.Threads.MaxLength = 2;
             this.Threads.Name = "Threads";
             this.Threads.Size = new System.Drawing.Size(22, 20);
@@ -94,7 +94,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(92, 52);
+            this.label2.Location = new System.Drawing.Point(109, 52);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(49, 13);
             this.label2.TabIndex = 6;
@@ -113,9 +113,9 @@
             // 
             // Stop
             // 
-            this.Stop.Location = new System.Drawing.Point(270, 49);
+            this.Stop.Location = new System.Drawing.Point(192, 49);
             this.Stop.Name = "Stop";
-            this.Stop.Size = new System.Drawing.Size(43, 21);
+            this.Stop.Size = new System.Drawing.Size(121, 21);
             this.Stop.TabIndex = 8;
             this.Stop.Text = "Stop";
             this.Stop.UseVisualStyleBackColor = true;
