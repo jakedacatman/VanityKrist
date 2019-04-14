@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Diagnostics;
 
 namespace VanityKrist
 {
@@ -39,6 +40,7 @@ namespace VanityKrist
         {
             if (int.TryParse(Threads.Text, out int t)) threads = t;
         }
+
         private void Start_Click(object sender, EventArgs e)
         {
             if (started)
@@ -55,9 +57,15 @@ namespace VanityKrist
             Numbers.Enabled = false;
             Stop.Enabled = true;
 
+            Output.AppendText($"using {threads} threads" + "\n");
+
             for (int i = 0; i < threads; i++)
-                new Thread(new ThreadStart(MinerThread)).Start();
-        }
+            {
+                var t = new Thread(new ThreadStart(MinerThread));
+                t.IsBackground = true;
+                t.Start();
+            }
+    }
 
         private void Stop_Click(object sender, EventArgs e)
         {
