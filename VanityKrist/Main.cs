@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -29,12 +29,15 @@ namespace VanityKrist
         private bool started = false;
         private bool check = false;
         private bool breakpls = false;
+        private string regex = "";
         private ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
         private TextWriter output = TextWriter.Synchronized(File.AppendText("output.txt"));
 
         private void Term_TextChanged(object sender, EventArgs e) => term = Term.Text.Replace(" ", "").ToLower();
 
         private void Numbers_CheckedChanged(object sender, EventArgs e) => check = Numbers.Checked;
+
+        private void Regex_TextChanged(object sender, EventArgs e) => regex = Regex.Text;
 
         private void Threads_TextChanged(object sender, EventArgs e)
         {
@@ -56,13 +59,17 @@ namespace VanityKrist
             Start.Enabled = false;
             Numbers.Enabled = false;
             Stop.Enabled = true;
+            Regex.Enabled = false;
 
             Output.AppendText($"using {threads} threads" + "\n");
 
             for (int i = 0; i < threads; i++)
             {
-                var t = new Thread(new ThreadStart(MinerThread));
-                t.IsBackground = true;
+                var t = new Thread(new ThreadStart(MinerThread))
+                {
+                    Name = $"minerThread{i}",
+                    IsBackground = true
+                };
                 t.Start();
             }
     }
@@ -77,12 +84,15 @@ namespace VanityKrist
             Threads.Enabled = true;
             Start.Enabled = true;
             Numbers.Enabled = true;
+            Regex.Enabled = true;
         }
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = "";
 
         private async void MinerThread()
         {
+            Regex reg = null;
+            if (regex != "") reg = new Regex(regex);
             while (true)
             {
                 if (breakpls == true) break;
@@ -103,21 +113,11 @@ namespace VanityKrist
                 var address = (await KristMethods.MakeV2Address(pkey)).ToLower();
                 if (check)
                 {
-                    if (address.Contains(term))
-                    {
-                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                        await output.WriteLineAsync($"{address}:{pkey}");
-                        await output.FlushAsync();
-                    }
+                    Find(address, pkey, reg);
                 }
                 else if (!address.Any(x => char.IsDigit(x)))
                 {
-                    if (address.Contains(term))
-                    {
-                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                        await output.WriteLineAsync($"{address}:{pkey}");
-                        await output.FlushAsync();
-                    }
+                    Find(address, pkey, reg);
                 }
             }
         }
@@ -129,6 +129,30 @@ namespace VanityKrist
                 if (t == obj) return true;
             }
             return false;
+        }
+
+        private async void Find(string address, string pkey, Regex reg)
+        {
+
+            if (term != "" && address.Contains(term))
+            {
+                Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
+                await output.WriteLineAsync($"{address}:{pkey}");
+                await output.FlushAsync();
+            }
+            else
+            {
+                if (reg != null)
+                {
+                    var match = reg.Match(address);
+                    if (match.Success)
+                    {
+                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
+                        await output.WriteLineAsync($"{address}:{pkey}");
+                        await output.FlushAsync();
+                    }
+                }
+            }
         }
     }
 }

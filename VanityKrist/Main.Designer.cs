@@ -38,12 +38,14 @@
             this.Numbers = new System.Windows.Forms.CheckBox();
             this.Stop = new System.Windows.Forms.Button();
             this.Clear = new System.Windows.Forms.Button();
+            this.Regex = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(143, 9);
+            this.label1.Location = new System.Drawing.Point(55, 9);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(31, 13);
             this.label1.TabIndex = 0;
@@ -65,7 +67,7 @@
             this.Term.Location = new System.Drawing.Point(12, 25);
             this.Term.MaxLength = 10;
             this.Term.Name = "Term";
-            this.Term.Size = new System.Drawing.Size(301, 20);
+            this.Term.Size = new System.Drawing.Size(129, 20);
             this.Term.TabIndex = 3;
             this.Term.TextChanged += new System.EventHandler(this.Term_TextChanged);
             // 
@@ -81,7 +83,7 @@
             // 
             // Threads
             // 
-            this.Threads.Location = new System.Drawing.Point(175, 48);
+            this.Threads.Location = new System.Drawing.Point(146, 49);
             this.Threads.MaxLength = 2;
             this.Threads.Name = "Threads";
             this.Threads.Size = new System.Drawing.Size(22, 20);
@@ -92,7 +94,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(120, 51);
+            this.label2.Location = new System.Drawing.Point(92, 52);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(49, 13);
             this.label2.TabIndex = 6;
@@ -111,9 +113,9 @@
             // 
             // Stop
             // 
-            this.Stop.Location = new System.Drawing.Point(238, 48);
+            this.Stop.Location = new System.Drawing.Point(270, 49);
             this.Stop.Name = "Stop";
-            this.Stop.Size = new System.Drawing.Size(75, 21);
+            this.Stop.Size = new System.Drawing.Size(43, 21);
             this.Stop.TabIndex = 8;
             this.Stop.Text = "Stop";
             this.Stop.UseVisualStyleBackColor = true;
@@ -129,11 +131,30 @@
             this.Clear.UseVisualStyleBackColor = true;
             this.Clear.Click += new System.EventHandler(this.Clear_Click);
             // 
+            // Regex
+            // 
+            this.Regex.Location = new System.Drawing.Point(192, 25);
+            this.Regex.Name = "Regex";
+            this.Regex.Size = new System.Drawing.Size(121, 20);
+            this.Regex.TabIndex = 10;
+            this.Regex.TextChanged += new System.EventHandler(this.Regex_TextChanged);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(237, 9);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(38, 13);
+            this.label3.TabIndex = 11;
+            this.label3.Text = "Regex";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(325, 431);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.Regex);
             this.Controls.Add(this.Clear);
             this.Controls.Add(this.Stop);
             this.Controls.Add(this.Numbers);
@@ -162,6 +183,8 @@
         private System.Windows.Forms.CheckBox Numbers;
         private System.Windows.Forms.Button Stop;
         private System.Windows.Forms.Button Clear;
+        private System.Windows.Forms.TextBox Regex;
+        private System.Windows.Forms.Label label3;
     }
 }
 
