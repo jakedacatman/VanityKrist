@@ -65,11 +65,7 @@ namespace VanityKrist
 
             for (int i = 0; i < threads; i++)
             {
-                var t = new Thread(new ThreadStart(MinerThread))
-                {
-                    Name = $"minerThread{i}",
-                    IsBackground = true
-                };
+                var t = new Task(MinerThread, TaskCreationOptions.LongRunning);
                 t.Start();
             }
     }
