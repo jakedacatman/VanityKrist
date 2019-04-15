@@ -47,8 +47,7 @@ namespace VanityKrist
 
         public static async Task<string> MakeV2Address(string pkey) => await Task.Run(() => makeV2Address(pkey));
 
-        public static string MakeKristWallet(string pkey)
-        { return SHA.ComputeSHA256Hash("KRISTWALLET"+pkey)+"-000"; }
+        public static string MakeKristWallet(string pkey) { return SHA.ComputeSHA256Hash("KRISTWALLET" + pkey) + "-000"; }
 
         private static char MakeByte(byte b)
         {
