@@ -26,7 +26,6 @@ namespace VanityKrist
         private int threads = 4;
         string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         Random random = new Random();
-        private bool started = false;
         private bool check = false;
         private string regex = "";
         private int length = 0;
@@ -55,13 +54,6 @@ namespace VanityKrist
 
         private void Start_Click(object sender, EventArgs e)
         {
-            if (started)
-            {
-                Output.AppendText("Already started!\n");
-                return;
-            }
-            started = true;
-
             Term.Enabled = false;
             Threads.Enabled = false;
             Start.Enabled = false;
@@ -79,12 +71,12 @@ namespace VanityKrist
                 if (length <= 0)
                 {
                     int plength = (int)Math.Pow(2, i + 1);
-                    new Task(async () => await MinerThread(plength, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    new Task(() => MinerThread(plength, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
                     Output.AppendText($"spawning thread {i + 1} with pkey length {plength}" + "\n");
                 }
                 else
                 {
-                    new Task(async () => await MinerThread(length, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    new Task(() => MinerThread(length, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
                     Output.AppendText($"spawning thread {i + 1} with pkey length {length}" + "\n");
                 }
             }
@@ -97,7 +89,6 @@ namespace VanityKrist
         {
             cts.Cancel();
             cts = new CancellationTokenSource();
-            started = false;
 
             Stop.Enabled = false;
             Term.Enabled = true;
@@ -191,6 +182,7 @@ namespace VanityKrist
             {
                 if (t == obj) return true;
             }
+            return false;
             return false;
         }
 
