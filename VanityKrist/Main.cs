@@ -70,12 +70,12 @@ namespace VanityKrist
                 if (length <= 0)
                 {
                     int plength = (int)Math.Pow(2, i + 1);
-                    new Task(() => MinerThread(plength, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    new Task(async () => await MinerThread(plength, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
                     Output.AppendText($"spawning thread {i + 1} with pkey length {plength}" + "\n");
                 }
                 else
                 {
-                    new Task(() => MinerThread(length, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    new Task(async () => await MinerThread(length, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
                     Output.AppendText($"spawning thread {i + 1} with pkey length {length}" + "\n");
                 }
             }
@@ -101,13 +101,13 @@ namespace VanityKrist
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = "";
 
-        private async void MinerThread(int plength, CancellationToken token)
+        private async Task MinerThread(int plength, CancellationToken token)
         {
             Regex reg = null;
             if (regex != "") reg = new Regex(regex);
             while (true)
             {
-                if (token.IsCancellationRequested) break;
+                if (token.IsCancellationRequested) return;
                 char[] stringChars = new char[plength];
                 while (true)
                 {
@@ -135,7 +135,7 @@ namespace VanityKrist
             }
         }
 
-        private async void UpdateCounter(CancellationToken token)
+        private async Task UpdateCounter(CancellationToken token)
         {
             while (true)
             {
