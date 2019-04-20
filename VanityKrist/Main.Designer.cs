@@ -42,6 +42,8 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.Addresses = new System.Windows.Forms.TextBox();
+            this.Length = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // label1
@@ -85,7 +87,7 @@
             // 
             // Threads
             // 
-            this.Threads.Location = new System.Drawing.Point(164, 49);
+            this.Threads.Location = new System.Drawing.Point(147, 49);
             this.Threads.MaxLength = 2;
             this.Threads.Name = "Threads";
             this.Threads.Size = new System.Drawing.Size(22, 20);
@@ -96,7 +98,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(109, 52);
+            this.label2.Location = new System.Drawing.Point(92, 52);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(49, 13);
             this.label2.TabIndex = 6;
@@ -105,6 +107,7 @@
             // Numbers
             // 
             this.Numbers.AutoSize = true;
+            this.Numbers.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.Numbers.Location = new System.Drawing.Point(12, 51);
             this.Numbers.Name = "Numbers";
             this.Numbers.Size = new System.Drawing.Size(74, 17);
@@ -115,9 +118,9 @@
             // 
             // Stop
             // 
-            this.Stop.Location = new System.Drawing.Point(192, 49);
+            this.Stop.Location = new System.Drawing.Point(248, 49);
             this.Stop.Name = "Stop";
-            this.Stop.Size = new System.Drawing.Size(121, 21);
+            this.Stop.Size = new System.Drawing.Size(65, 21);
             this.Stop.TabIndex = 8;
             this.Stop.Text = "Stop";
             this.Stop.UseVisualStyleBackColor = true;
@@ -167,11 +170,31 @@
             this.Addresses.Size = new System.Drawing.Size(100, 20);
             this.Addresses.TabIndex = 13;
             // 
+            // Length
+            // 
+            this.Length.Location = new System.Drawing.Point(220, 49);
+            this.Length.MaxLength = 2;
+            this.Length.Name = "Length";
+            this.Length.Size = new System.Drawing.Size(22, 20);
+            this.Length.TabIndex = 14;
+            this.Length.TextChanged += new System.EventHandler(this.Length_TextChanged);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(174, 52);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(40, 13);
+            this.label5.TabIndex = 15;
+            this.label5.Text = "Length";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(325, 431);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.Length);
             this.Controls.Add(this.Addresses);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -209,6 +232,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox Addresses;
+        private System.Windows.Forms.TextBox Length;
+        private System.Windows.Forms.Label label5;
     }
 }
 

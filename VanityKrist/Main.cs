@@ -25,6 +25,7 @@ namespace VanityKrist
         private bool started = false;
         private bool check = false;
         private string regex = "";
+        private int length = 0;
         private ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
         private TextWriter output = TextWriter.Synchronized(File.AppendText("output.txt"));
 
@@ -37,6 +38,8 @@ namespace VanityKrist
         private void Numbers_CheckedChanged(object sender, EventArgs e) => check = Numbers.Checked;
 
         private void Regex_TextChanged(object sender, EventArgs e) => regex = Regex.Text;
+
+        private void Length_TextChanged(object sender, EventArgs e) => int.TryParse(Length.Text, out length);
 
         private void Threads_TextChanged(object sender, EventArgs e)
         {
@@ -58,12 +61,23 @@ namespace VanityKrist
             Numbers.Enabled = false;
             Stop.Enabled = true;
             Regex.Enabled = false;
+            Length.Enabled = false;
 
             Output.AppendText($"using {threads} threads" + "\n");
 
             for (int i = 0; i < threads; i++)
             {
-                new Task(() => MinerThread(cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                if (length <= 0)
+                {
+                    int plength = (int)Math.Pow(2, i + 1);
+                    new Task(() => MinerThread(plength, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    Output.AppendText($"spawning thread {i + 1} with pkey length {plength}" + "\n");
+                }
+                else
+                {
+                    new Task(() => MinerThread(length, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    Output.AppendText($"spawning thread {i + 1} with pkey length {length}" + "\n");
+                }
             }
 
             new Task(() => UpdateCounter(cts.Token), TaskCreationOptions.LongRunning).Start();
@@ -82,18 +96,19 @@ namespace VanityKrist
             Start.Enabled = true;
             Numbers.Enabled = true;
             Regex.Enabled = true;
+            Length.Enabled = true;
         }
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = "";
 
-        private async void MinerThread(CancellationToken token)
+        private async void MinerThread(int plength, CancellationToken token)
         {
             Regex reg = null;
             if (regex != "") reg = new Regex(regex);
             while (true)
             {
                 if (token.IsCancellationRequested) break;
-                char[] stringChars = new char[16];
+                char[] stringChars = new char[plength];
                 while (true)
                 {
                     for (int i = 0; i < stringChars.Length; i++)
