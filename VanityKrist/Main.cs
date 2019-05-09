@@ -21,11 +21,11 @@ namespace VanityKrist
             Stop.Enabled = false;
         }
 
-        private string term = "";
+        private string term = string.Empty;
         private int threads = 4;
         Random random = new Random();
         private bool check = false;
-        private string regex = "";
+        private string regex = string.Empty;
         private ulong basepasswd = RandUlong();
 
         private Logger l = new LoggerConfiguration()
@@ -60,11 +60,11 @@ namespace VanityKrist
             Stop.Enabled = true;
             Regex.Enabled = false;
 
-            Output.AppendText($"starting with base {string.Format("0x{0:X}", basepasswd).Replace("0x", "").ToLower()}" + "\n");
+            Output.AppendText($"starting with base {string.Format("0x{0:X}", basepasswd).Replace("0x", string.Empty).ToLower()}" + "\n");
             Output.AppendText($"using {threads} threads" + "\n");
 
             Regex reg = null;
-            if (regex != "") reg = new Regex(regex);
+            if (regex != string.Empty) reg = new Regex(regex);
 
             ulong perThread = (ulong.MaxValue - basepasswd) / (ulong)threads;
 
@@ -72,7 +72,7 @@ namespace VanityKrist
 
             for (int i = 0; i < threads; i++)
             {
-                Output.AppendText($"spawned thread {i}, working from {string.Format("0x{0:X}", bp).Replace("0x", "").ToLower()} to {string.Format("0x{0:X}", bp + perThread).Replace("0x", "").ToLower()}" + "\n");
+                Output.AppendText($"spawned thread {i}, working from {string.Format("0x{0:X}", bp).Replace("0x", string.Empty).ToLower()} to {string.Format("0x{0:X}", bp + perThread).Replace("0x", string.Empty).ToLower()}" + "\n");
 
                 Task.Run(() => MinerThread(i - 1, perThread, bp, reg, cts.Token), cts.Token);
 
@@ -96,7 +96,7 @@ namespace VanityKrist
             basepasswd = RandUlong();
         }
 
-        private void Clear_Click(object sender, EventArgs e) => Output.Text = "";
+        private void Clear_Click(object sender, EventArgs e) => Output.Text = string.Empty;
 
         private Task MinerThread(int id, ulong workSize, ulong basepasswd, Regex reg, CancellationToken token)
         {
@@ -134,7 +134,7 @@ namespace VanityKrist
                     {
                         var by = 48 + Math.Floor(Convert.ToByte(protein[link], 16) / 7d);
                         v2.Append((char)(by + 39 > 122 ? 101 : by > 57 ? by + 39 : by));
-                        protein[link] = "";
+                        protein[link] = string.Empty;
                         n++;
                     }
                     else stick = Hash(stick);
@@ -144,7 +144,7 @@ namespace VanityKrist
 
                 if (check)
                 {
-                    if (term != "" && address.Contains(term))
+                    if (term != string.Empty && address.Contains(term))
                         Write(id, address, passwd);
                     else if (reg != null)
                     {
@@ -155,7 +155,7 @@ namespace VanityKrist
                 }
                 else if (!address.Any(x => char.IsDigit(x)))
                 {
-                    if (term != "" && address.Contains(term))
+                    if (term != string.Empty && address.Contains(term))
                         Write(id, address, passwd);
                     else if (reg != null)
                     {
@@ -189,7 +189,7 @@ namespace VanityKrist
         {
             using (var h = SHA256.Create())
             {
-                return string.Join("", h.ComputeHash(Encoding.UTF8.GetBytes(toHash)).Select(x => x.ToString("x2")));
+                return string.Join(string.Empty, h.ComputeHash(Encoding.UTF8.GetBytes(toHash)).Select(x => x.ToString("x2")));
             }
         }
 
