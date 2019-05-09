@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using EasyEncryption;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.IO;
+using System.Security.Cryptography;
 using Serilog;
 using Serilog.Core;
 
@@ -24,13 +23,11 @@ namespace VanityKrist
 
         private string term = "";
         private int threads = 4;
-        string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         Random random = new Random();
         private bool started = false;
         private bool check = false;
         private string regex = "";
-        private int length = 0;
-        private ConcurrentQueue<string> queue = new ConcurrentQueue<string>();
+        private ulong basepkey = RandUlong();
 
         private Logger l = new LoggerConfiguration()
             .WriteTo.Async(x => x.File("output.txt", outputTemplate: "{Message:l}"))
@@ -40,13 +37,15 @@ namespace VanityKrist
 
         private int counter = 0;
 
-        private void Term_TextChanged(object sender, EventArgs e) => term = Term.Text.Replace(" ", "").ToLower();
+        private void Term_TextChanged(object sender, EventArgs e)
+        {
+            term = Term.Text.ToLower().MakeAlphanumeric();
+            Term.Text = term;
+        }
 
         private void Numbers_CheckedChanged(object sender, EventArgs e) => check = Numbers.Checked;
 
         private void Regex_TextChanged(object sender, EventArgs e) => regex = Regex.Text;
-
-        private void Length_TextChanged(object sender, EventArgs e) => int.TryParse(Length.Text, out length);
 
         private void Threads_TextChanged(object sender, EventArgs e)
         {
@@ -68,29 +67,26 @@ namespace VanityKrist
             Numbers.Enabled = false;
             Stop.Enabled = true;
             Regex.Enabled = false;
-            Length.Enabled = false;
 
             Output.AppendText($"using {threads} threads" + "\n");
 
+            Regex reg = null;
+            if (regex != "") reg = new Regex(regex);
+
+            ulong perThread = (ulong.MaxValue - basepkey) / (ulong)threads;
+
+            var bp = basepkey;
+
             for (int i = 0; i < threads; i++)
             {
-                Regex reg = null;
-                if (regex != "") reg = new Regex(regex);
-                if (length <= 0)
-                {
-                    int plength = (int)Math.Pow(2, i + 1);
-                    new Task(async () => await MinerThread(plength, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
-                    Output.AppendText($"spawning thread {i + 1} with pkey length {plength}" + "\n");
-                }
-                else
-                {
-                    new Task(async () => await MinerThread(length, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
-                    Output.AppendText($"spawning thread {i + 1} with pkey length {length}" + "\n");
-                }
+                Output.AppendText($"spawned thread {i}, working from {string.Format("0x{0:X}", bp).Replace("0x", "").ToLower()} to {string.Format("0x{0:X}", bp + perThread).Replace("0x", "").ToLower()}" + "\n");
+
+                Task.Run(() => MinerThread(perThread, bp, reg, cts.Token), cts.Token);
+
+                bp += perThread;
             }
 
             Task.Run(() => UpdateCounter(cts.Token));
-
         }
 
         private void Stop_Click(object sender, EventArgs e)
@@ -105,38 +101,26 @@ namespace VanityKrist
             Start.Enabled = true;
             Numbers.Enabled = true;
             Regex.Enabled = true;
-            Length.Enabled = true;
+
+            basepkey = RandUlong();
         }
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = "";
 
-        private Task MinerThread(int plength, Regex reg, CancellationToken token)
+        private Task MinerThread(ulong workSize, ulong basepkey, Regex reg, CancellationToken token)
         {
-            while (true)
+            for (ulong curr = basepkey; curr < (basepkey + workSize); curr++)
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
-                char[] stringChars = new char[plength];
-                var iter = 0;
-                while (true)
-                {
-                    if (iter % 10000 == 0)
-                        if (token.IsCancellationRequested) return Task.CompletedTask;
-                    for (int i = 0; i < stringChars.Length; i++)
-                    {
-                        stringChars[i] = chars[random.Next(chars.Length)];
-                    }
-                    var test = new string(stringChars);
-                    if (IsIn(queue, test) == false) break;
-                    iter++;
-                }
 
-                var pkey = new string(stringChars);
-                queue.Enqueue(pkey);
-                if (pkey == null || pkey == string.Empty)
-                    return null;
+                var hex = NumToHex(curr);
+
+                //var pkey = $"{Hash(hex)}-000";
+                var pkey = hex;
+
                 var protein = new string[9];
 
-                var stick = SHA.ComputeSHA256Hash(SHA.ComputeSHA256Hash(pkey));
+                var stick = Hash(Hash(pkey));
                 var link = 0;
                 var v2 = new StringBuilder();
                 var n = 0;
@@ -145,7 +129,7 @@ namespace VanityKrist
                     if (n < 9)
                     {
                         protein[n] = new string(new char[] { stick[0], stick[1] });
-                        stick = SHA.ComputeSHA256Hash(SHA.ComputeSHA256Hash(stick));
+                        stick = Hash(Hash(stick));
                     }
                 }
                 n = 0;
@@ -163,15 +147,49 @@ namespace VanityKrist
                         protein[link] = "";
                         n++;
                     }
-                    else stick = SHA.ComputeSHA256Hash(stick);
+                    else stick = Hash(stick);
                 }
                 var address = "k" + v2.ToString();
                 counter++;
+
+                //Output.Invoke(new Action(() => Output.AppendText($"{address}:{pkey}\n")));
+                //pkey = Hash("KRISTWALLET" + pkey) + "-000";
                 if (check)
-                    Find(address, pkey, reg);
+                {
+                    if (term != "" && address.Contains(term))
+                    {
+                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
+                        l.Information($"{address}:{pkey}");
+                    }
+                    else if (reg != null)
+                    {
+                        var match = reg.Match(address);
+                        if (match.Success)
+                        {
+                            Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
+                            l.Information($"{address}:{pkey}");
+                        }
+                    }
+                }
                 else if (!address.Any(x => char.IsDigit(x)))
-                    Find(address, pkey, reg);
+                {
+                    if (term != "" && address.Contains(term))
+                    {
+                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
+                        l.Information($"{address}:{pkey}");
+                    }
+                    else if (reg != null)
+                    {
+                        var match = reg.Match(address);
+                        if (match.Success)
+                        {
+                            Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
+                            l.Information($"{address}:{pkey}");
+                        }
+                    }
+                }
             }
+            return Task.CompletedTask;
         }
 
         private Task UpdateCounter(CancellationToken token)
@@ -179,41 +197,51 @@ namespace VanityKrist
             while (true)
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
-                Output.Invoke(new Action(() =>  Addresses.Text = counter.ToString()));
+                Addresses.Invoke(new Action(() => Addresses.Text = counter.ToString()));
                 counter = 0;
                 Thread.Sleep(1000);
             }
         }
 
-        private bool IsIn(ConcurrentQueue<string> queue, string obj)
+        private string Hash(string toHash)
         {
-            foreach (string t in queue)
+            using (var h = SHA256.Create())
             {
-                if (t == obj) return true;
+                return string.Join("", h.ComputeHash(Encoding.UTF8.GetBytes(toHash)).Select(x => x.ToString("x2")));
             }
-            return false;
         }
 
-        private void Find(string address, string pkey, Regex reg)
+        private string NumToHex(ulong num)
         {
+            char[] hexChars = new char[16]
+            {
+                '0', '1', '2','3',
+                '4', '5', '6', '7',
+                '8', '9', 'a', 'b',
+                'c', 'd', 'e', 'f'
+            };
 
-            if (term != "" && address.Contains(term))
+            char[] gen = new char[16];
+            for (int i = 0; i < 16; i++)
             {
-                Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                l.Information($"{address}:{pkey}\n");
+                gen[i] = hexChars[(num & 15ul * (ulong)Math.Pow(16, 15 - i)) >> (60   - (4 * i))];
             }
-            else
-            {
-                if (reg != null)
-                {
-                    var match = reg.Match(address);
-                    if (match.Success)
-                    {
-                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                        l.Information($"{address}:{pkey}\n");
-                    }
-                }
-            }
+            return new string(gen);
+        }
+        private static ulong RandUlong()
+        {
+            var r = new Random();
+            var buffer = new byte[sizeof(ulong)];
+            r.NextBytes(buffer);
+            return BitConverter.ToUInt64(buffer, 0);
+        }
+    }
+    public static class StringExtensions
+    {
+        public static string MakeAlphanumeric(this string text)
+        {
+            var s = text.Where(x => char.IsLetterOrDigit(x)).ToArray();
+            return new string(s);
         }
     }
 }
