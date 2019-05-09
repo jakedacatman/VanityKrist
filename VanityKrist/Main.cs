@@ -105,12 +105,11 @@ namespace VanityKrist
 
                 var hex = NumToHex(curr);
 
-                //var pkey = $"{Hash(hex)}-000";
-                var pkey = hex;
+                var passwd = hex;
 
                 var protein = new string[9];
 
-                var stick = Hash(Hash(pkey));
+                var stick = Hash(Hash(passwd));
                 var link = 0;
                 var v2 = new StringBuilder();
                 var n = 0;
@@ -142,44 +141,36 @@ namespace VanityKrist
                 var address = "k" + v2.ToString();
                 counter++;
 
-                //Output.Invoke(new Action(() => Output.AppendText($"{address}:{pkey}\n")));
-                //pkey = Hash("KRISTWALLET" + pkey) + "-000";
                 if (check)
                 {
                     if (term != "" && address.Contains(term))
-                    {
-                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                        l.Information($"{address}:{pkey}");
-                    }
+                        Write(address, passwd);
                     else if (reg != null)
                     {
                         var match = reg.Match(address);
                         if (match.Success)
-                        {
-                            Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                            l.Information($"{address}:{pkey}");
-                        }
+                            Write(address, passwd);
                     }
                 }
                 else if (!address.Any(x => char.IsDigit(x)))
                 {
                     if (term != "" && address.Contains(term))
-                    {
-                        Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                        l.Information($"{address}:{pkey}");
-                    }
+                        Write(address, passwd);
                     else if (reg != null)
                     {
                         var match = reg.Match(address);
                         if (match.Success)
-                        {
-                            Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {pkey}\n")));
-                            l.Information($"{address}:{pkey}");
-                        }
+                            Write(address, passwd);
                     }
                 }
             }
             return Task.CompletedTask;
+        }
+
+        private void Write(string address, string passwd)
+        {
+            Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {passwd}\n")));
+            l.Information($"{address}:{passwd}");
         }
 
         private Task UpdateCounter(CancellationToken token)
