@@ -24,6 +24,7 @@ namespace VanityKrist
         private string term = "";
         private int threads = 4;
         Random random = new Random();
+        private bool started = false;
         private bool check = false;
         private string regex = "";
         private ulong basepkey = RandUlong();
@@ -53,6 +54,13 @@ namespace VanityKrist
 
         private void Start_Click(object sender, EventArgs e)
         {
+            if (started)
+            {
+                Output.AppendText("Already started!\n");
+                return;
+            }
+            started = true;
+
             Term.Enabled = false;
             Threads.Enabled = false;
             Start.Enabled = false;
@@ -75,7 +83,8 @@ namespace VanityKrist
 
                 Task.Run(() => MinerThread(perThread, bp, reg, cts.Token), cts.Token);
 
-                bp += perThread;}
+                bp += perThread;
+            }
 
             Task.Run(() => UpdateCounter(cts.Token));
         }
@@ -84,6 +93,7 @@ namespace VanityKrist
         {
             cts.Cancel();
             cts = new CancellationTokenSource();
+            started = false;
 
             Stop.Enabled = false;
             Term.Enabled = true;

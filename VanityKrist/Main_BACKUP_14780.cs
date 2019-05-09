@@ -71,11 +71,34 @@ namespace VanityKrist
 
             for (int i = 0; i < threads; i++)
             {
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+                Regex reg = null;
+                if (regex != "") reg = new Regex(regex);
+                if (length <= 0)
+                {
+                    int plength = (int)Math.Pow(2, i + 1);
+                    new Task(() => MinerThread(plength, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    Output.AppendText($"spawning thread {i + 1} with pkey length {plength}" + "\n");
+                }
+                else
+                {
+                    new Task(() => MinerThread(length, reg, cts.Token), cts.Token, TaskCreationOptions.LongRunning).Start();
+                    Output.AppendText($"spawning thread {i + 1} with pkey length {length}" + "\n");
+                }
+=======
+>>>>>>> 731ab026775d3c90f2f72862f485edb2bc9691a3
                 Output.AppendText($"spawned thread {i}, working from {string.Format("0x{0:X}", bp).Replace("0x", "").ToLower()} to {string.Format("0x{0:X}", bp + perThread).Replace("0x", "").ToLower()}" + "\n");
 
                 Task.Run(() => MinerThread(perThread, bp, reg, cts.Token), cts.Token);
 
-                bp += perThread;}
+                bp += perThread;
+<<<<<<< HEAD
+=======
+>>>>>>> rewrite kind of
+>>>>>>> 731ab026775d3c90f2f72862f485edb2bc9691a3
+            }
 
             Task.Run(() => UpdateCounter(cts.Token));
         }
@@ -199,6 +222,14 @@ namespace VanityKrist
             {
                 return string.Join("", h.ComputeHash(Encoding.UTF8.GetBytes(toHash)).Select(x => x.ToString("x2")));
             }
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+            return false;
+            return false;
+=======
+>>>>>>> rewrite kind of
+>>>>>>> 731ab026775d3c90f2f72862f485edb2bc9691a3
         }
 
         private string NumToHex(ulong num)
