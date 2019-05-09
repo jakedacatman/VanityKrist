@@ -26,7 +26,7 @@ namespace VanityKrist
         Random random = new Random();
         private bool check = false;
         private string regex = "";
-        private ulong basepkey = RandUlong();
+        private ulong basepasswd = RandUlong();
 
         private Logger l = new LoggerConfiguration()
             .WriteTo.Async(x => x.File("output.txt", outputTemplate: "{Message:l}"))
@@ -60,20 +60,21 @@ namespace VanityKrist
             Stop.Enabled = true;
             Regex.Enabled = false;
 
+            Output.AppendText($"starting with base {string.Format("0x{0:X}", basepasswd).Replace("0x", "").ToLower()}" + "\n");
             Output.AppendText($"using {threads} threads" + "\n");
 
             Regex reg = null;
             if (regex != "") reg = new Regex(regex);
 
-            ulong perThread = (ulong.MaxValue - basepkey) / (ulong)threads;
+            ulong perThread = (ulong.MaxValue - basepasswd) / (ulong)threads;
 
-            var bp = basepkey;
+            var bp = basepasswd;
 
             for (int i = 0; i < threads; i++)
             {
                 Output.AppendText($"spawned thread {i}, working from {string.Format("0x{0:X}", bp).Replace("0x", "").ToLower()} to {string.Format("0x{0:X}", bp + perThread).Replace("0x", "").ToLower()}" + "\n");
 
-                Task.Run(() => MinerThread(perThread, bp, reg, cts.Token), cts.Token);
+                Task.Run(() => MinerThread(i - 1, perThread, bp, reg, cts.Token), cts.Token);
 
                 bp += perThread;}
 
@@ -92,14 +93,14 @@ namespace VanityKrist
             Numbers.Enabled = true;
             Regex.Enabled = true;
 
-            basepkey = RandUlong();
+            basepasswd = RandUlong();
         }
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = "";
 
-        private Task MinerThread(ulong workSize, ulong basepkey, Regex reg, CancellationToken token)
+        private Task MinerThread(int id, ulong workSize, ulong basepasswd, Regex reg, CancellationToken token)
         {
-            for (ulong curr = basepkey; curr < (basepkey + workSize); curr++)
+            for (ulong curr = basepasswd; curr < (basepasswd + workSize); curr++)
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
 
@@ -144,33 +145,33 @@ namespace VanityKrist
                 if (check)
                 {
                     if (term != "" && address.Contains(term))
-                        Write(address, passwd);
+                        Write(id, address, passwd);
                     else if (reg != null)
                     {
                         var match = reg.Match(address);
                         if (match.Success)
-                            Write(address, passwd);
+                            Write(id, address, passwd);
                     }
                 }
                 else if (!address.Any(x => char.IsDigit(x)))
                 {
                     if (term != "" && address.Contains(term))
-                        Write(address, passwd);
+                        Write(id, address, passwd);
                     else if (reg != null)
                     {
                         var match = reg.Match(address);
                         if (match.Success)
-                            Write(address, passwd);
+                            Write(id, address, passwd);
                     }
                 }
             }
             return Task.CompletedTask;
         }
 
-        private void Write(string address, string passwd)
+        private void Write(int id, string address, string passwd)
         {
-            Output.Invoke(new Action(() => Output.AppendText($"found {address}, with pw {passwd}\n")));
-            l.Information($"{address}:{passwd}");
+            Output.Invoke(new Action(() => Output.AppendText($"thread {id} found {address}, with pw {passwd}\n")));
+            l.Information($"{address}:{passwd}\n");
         }
 
         private Task UpdateCounter(CancellationToken token)
