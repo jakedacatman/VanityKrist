@@ -74,7 +74,7 @@ namespace VanityKrist
             {
                 Output.AppendText($"spawned thread {i}, working from {string.Format("0x{0:X}", bp).Replace("0x", string.Empty).ToLower()} to {string.Format("0x{0:X}", bp + perThread).Replace("0x", string.Empty).ToLower()}" + "\n");
 
-                Task.Run(() => MinerThread(i - 1, perThread, bp, reg, cts.Token), cts.Token);
+                Task.Run(() => MinerThread(i, perThread, bp, reg, cts.Token), cts.Token);
 
                 bp += perThread;}
 
