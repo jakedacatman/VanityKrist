@@ -120,11 +120,8 @@ namespace VanityKrist
                 var n = 0;
                 for (n = 0; n < 9; n++)
                 {
-                    if (n < 9)
-                    {
-                        protein[n] = new string(new char[] { stick[0], stick[1] });
-                        stick = Hash(Hash(stick));
-                    }
+                    protein[n] = new string(new char[] { stick[0], stick[1] });
+                    stick = Hash(Hash(stick));
                 }
                 n = 0;
 
@@ -195,7 +192,7 @@ namespace VanityKrist
             while (true)
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
-                MsPerA.Invoke(new Action(() => MsPerA.Text = Math.Round(1d/counter * 1000d, 5).ToString()));
+                MsPerA.Invoke(new Action(() => MsPerA.Text = Math.Round(1000d/counter, 5).ToString()));
                 Thread.Sleep(1000);
             }
         }
