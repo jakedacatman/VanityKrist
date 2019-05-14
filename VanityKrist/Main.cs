@@ -61,7 +61,7 @@ namespace VanityKrist
             Stop.Enabled = true;
             Regex.Enabled = false;
 
-            Output.AppendText($"starting with base {string.Format("0x{0:X}", basepasswd).Replace("0x", string.Empty).ToLower()}" + "\n");
+            Output.AppendText($"starting with base {NumToHex(basepasswd)}" + "\n");
             Output.AppendText($"using {threads} threads" + "\n");
 
             Regex reg = null;
@@ -73,7 +73,7 @@ namespace VanityKrist
 
             for (int i = 0; i < threads; i++)
             {
-                Output.AppendText($"spawned thread {i}, working from {string.Format("0x{0:X}", bp).Replace("0x", string.Empty).ToLower()} to {string.Format("0x{0:X}", bp + perThread).Replace("0x", string.Empty).ToLower()}" + "\n");
+                Output.AppendText($"spawned thread {i}, working from {NumToHex(bp)} to {NumToHex(bp + perThread)}" + "\n");
 
                 Task.Run(() => MinerThread(i, perThread, bp, reg, cts.Token), cts.Token);
 
@@ -207,6 +207,7 @@ namespace VanityKrist
 
         private string NumToHex(ulong num)
         {
+            /*
             char[] hexChars = new char[16]
             {
                 '0', '1', '2','3',
@@ -221,6 +222,8 @@ namespace VanityKrist
                 gen[i] = hexChars[(num & 15ul * (ulong)Math.Pow(16, 15 - i)) >> (60 - (4 * i))];
             }
             return new string(gen);
+            */
+            return string.Format("0x{0:X}", num).Replace("0x", string.Empty).ToLower();
         }
         private static ulong RandUlong()
         {
