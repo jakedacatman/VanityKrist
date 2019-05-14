@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
@@ -76,9 +77,12 @@ namespace VanityKrist
 
                 Task.Run(() => MinerThread(i, perThread, bp, reg, cts.Token), cts.Token);
 
-                bp += perThread;}
+                bp += perThread;
+            }
+            Output.AppendText("\n");
 
             Task.Run(() => UpdateCounter(cts.Token));
+            Task.Run(() => UpdateTime(cts.Token));
         }
 
         private void Stop_Click(object sender, EventArgs e)
@@ -104,7 +108,9 @@ namespace VanityKrist
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
 
-                var passwd = NumToHex(curr);
+                var hex = NumToHex(curr);
+
+                var passwd = hex;
 
                 var protein = new string[9];
 
@@ -139,16 +145,22 @@ namespace VanityKrist
                 }
                 var address = "k" + v2.ToString();
                 counter++;
-
                 if (term != string.Empty && address.Contains(term))
                 {
                     if (check)
-                        Write(id, address, passwd);
-                    else if (!address.HasDigits())
                     {
-                        var match = reg.Match(address);
-                        if (match.Success)
+                        Write(id, address, passwd);
+                    }
+                    else if (!address.Any(x => char.IsDigit(x)))
+                    {
+                        if (term != string.Empty && address.Contains(term))
                             Write(id, address, passwd);
+                        else if (reg != null)
+                        {
+                            var match = reg.Match(address);
+                            if (match.Success)
+                                Write(id, address, passwd);
+                        }
                     }
                 }
                 else if (reg != null)
@@ -178,6 +190,16 @@ namespace VanityKrist
             }
         }
 
+        private Task UpdateTime(CancellationToken token)
+        {
+            while (true)
+            {
+                if (token.IsCancellationRequested) return Task.CompletedTask;
+                MsPerA.Invoke(new Action(() => MsPerA.Text = Math.Round(1d/counter * 1000d, 5).ToString()));
+                Thread.Sleep(1000);
+            }
+        }
+
         private string Hash(string toHash)
         {
             using (var h = SHA256.Create())
@@ -199,7 +221,7 @@ namespace VanityKrist
             char[] gen = new char[16];
             for (int i = 0; i < 16; i++)
             {
-                gen[i] = hexChars[(num & 15ul * (ulong)Math.Pow(16, 15 - i)) >> (60   - (4 * i))];
+                gen[i] = hexChars[(num & 15ul * (ulong)Math.Pow(16, 15 - i)) >> (60 - (4 * i))];
             }
             return new string(gen);
         }
@@ -211,21 +233,12 @@ namespace VanityKrist
             return BitConverter.ToUInt64(buffer, 0);
         }
     }
-    public static class Extensions
+    public static class StringExtensions
     {
         public static string MakeAlphanumeric(this string text)
         {
             var s = text.Where(x => char.IsLetterOrDigit(x)).ToArray();
             return new string(s);
-        }
-        public static bool HasDigits(this string s)
-        {
-            for (int i = 0; i <= s.Length; i++)
-            {
-                if (char.IsDigit(s[i]))
-                    return true;
-            }
-            return false;
         }
     }
 }

@@ -42,12 +42,14 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.Addresses = new System.Windows.Forms.TextBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.MsPerA = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(55, 9);
+            this.label1.Location = new System.Drawing.Point(89, 9);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(31, 13);
             this.label1.TabIndex = 0;
@@ -56,9 +58,9 @@
             // Start
             // 
             this.Start.AutoSize = true;
-            this.Start.Location = new System.Drawing.Point(12, 74);
+            this.Start.Location = new System.Drawing.Point(12, 75);
             this.Start.Name = "Start";
-            this.Start.Size = new System.Drawing.Size(301, 23);
+            this.Start.Size = new System.Drawing.Size(448, 23);
             this.Start.TabIndex = 1;
             this.Start.Text = "Start";
             this.Start.UseVisualStyleBackColor = true;
@@ -69,7 +71,7 @@
             this.Term.Location = new System.Drawing.Point(12, 25);
             this.Term.MaxLength = 10;
             this.Term.Name = "Term";
-            this.Term.Size = new System.Drawing.Size(129, 20);
+            this.Term.Size = new System.Drawing.Size(209, 20);
             this.Term.TabIndex = 3;
             this.Term.TextChanged += new System.EventHandler(this.Term_TextChanged);
             // 
@@ -79,13 +81,13 @@
             this.Output.Location = new System.Drawing.Point(12, 103);
             this.Output.Name = "Output";
             this.Output.ReadOnly = true;
-            this.Output.Size = new System.Drawing.Size(301, 284);
+            this.Output.Size = new System.Drawing.Size(448, 284);
             this.Output.TabIndex = 4;
             this.Output.Text = "";
             // 
             // Threads
             // 
-            this.Threads.Location = new System.Drawing.Point(147, 49);
+            this.Threads.Location = new System.Drawing.Point(438, 48);
             this.Threads.MaxLength = 2;
             this.Threads.Name = "Threads";
             this.Threads.Size = new System.Drawing.Size(22, 20);
@@ -96,7 +98,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(92, 52);
+            this.label2.Location = new System.Drawing.Point(383, 51);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(49, 13);
             this.label2.TabIndex = 6;
@@ -116,9 +118,9 @@
             // 
             // Stop
             // 
-            this.Stop.Location = new System.Drawing.Point(192, 49);
+            this.Stop.Location = new System.Drawing.Point(92, 48);
             this.Stop.Name = "Stop";
-            this.Stop.Size = new System.Drawing.Size(121, 21);
+            this.Stop.Size = new System.Drawing.Size(285, 21);
             this.Stop.TabIndex = 8;
             this.Stop.Text = "Stop";
             this.Stop.UseVisualStyleBackColor = true;
@@ -126,9 +128,9 @@
             // 
             // Clear
             // 
-            this.Clear.Location = new System.Drawing.Point(238, 399);
+            this.Clear.Location = new System.Drawing.Point(344, 398);
             this.Clear.Name = "Clear";
-            this.Clear.Size = new System.Drawing.Size(75, 20);
+            this.Clear.Size = new System.Drawing.Size(116, 20);
             this.Clear.TabIndex = 9;
             this.Clear.Text = "Clear";
             this.Clear.UseVisualStyleBackColor = true;
@@ -136,16 +138,16 @@
             // 
             // Regex
             // 
-            this.Regex.Location = new System.Drawing.Point(192, 25);
+            this.Regex.Location = new System.Drawing.Point(240, 25);
             this.Regex.Name = "Regex";
-            this.Regex.Size = new System.Drawing.Size(121, 20);
+            this.Regex.Size = new System.Drawing.Size(220, 20);
             this.Regex.TabIndex = 10;
             this.Regex.TextChanged += new System.EventHandler(this.Regex_TextChanged);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(237, 9);
+            this.label3.Location = new System.Drawing.Point(339, 9);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(38, 13);
             this.label3.TabIndex = 11;
@@ -156,23 +158,42 @@
             this.label4.AutoSize = true;
             this.label4.Location = new System.Drawing.Point(12, 403);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(96, 13);
+            this.label4.Size = new System.Drawing.Size(24, 13);
             this.label4.TabIndex = 12;
-            this.label4.Text = "Addresses/second";
+            this.label4.Text = "A/s";
             // 
             // Addresses
             // 
             this.Addresses.Enabled = false;
-            this.Addresses.Location = new System.Drawing.Point(114, 399);
+            this.Addresses.Location = new System.Drawing.Point(41, 400);
             this.Addresses.Name = "Addresses";
             this.Addresses.Size = new System.Drawing.Size(100, 20);
             this.Addresses.TabIndex = 13;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(189, 402);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(32, 13);
+            this.label5.TabIndex = 14;
+            this.label5.Text = "ms/A";
+            // 
+            // MsPerA
+            // 
+            this.MsPerA.Enabled = false;
+            this.MsPerA.Location = new System.Drawing.Point(240, 399);
+            this.MsPerA.Name = "MsPerA";
+            this.MsPerA.Size = new System.Drawing.Size(98, 20);
+            this.MsPerA.TabIndex = 15;
             // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(325, 431);
+            this.ClientSize = new System.Drawing.Size(472, 431);
+            this.Controls.Add(this.MsPerA);
+            this.Controls.Add(this.label5);
             this.Controls.Add(this.Addresses);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label3);
@@ -210,6 +231,8 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox Addresses;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.TextBox MsPerA;
     }
 }
 
