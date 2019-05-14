@@ -104,9 +104,7 @@ namespace VanityKrist
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
 
-                var hex = NumToHex(curr);
-
-                var passwd = hex;
+                var passwd = NumToHex(curr);
 
                 var protein = new string[9];
 
@@ -142,27 +140,22 @@ namespace VanityKrist
                 var address = "k" + v2.ToString();
                 counter++;
 
-                if (check)
+                if (term != string.Empty && address.Contains(term))
                 {
-                    if (term != string.Empty && address.Contains(term))
+                    if (check)
                         Write(id, address, passwd);
-                    else if (reg != null)
+                    else if (!address.HasDigits())
                     {
                         var match = reg.Match(address);
                         if (match.Success)
                             Write(id, address, passwd);
                     }
                 }
-                else if (!address.Any(x => char.IsDigit(x)))
+                else if (reg != null)
                 {
-                    if (term != string.Empty && address.Contains(term))
+                    var match = reg.Match(address);
+                    if (match.Success)
                         Write(id, address, passwd);
-                    else if (reg != null)
-                    {
-                        var match = reg.Match(address);
-                        if (match.Success)
-                            Write(id, address, passwd);
-                    }
                 }
             }
             return Task.CompletedTask;
@@ -218,12 +211,21 @@ namespace VanityKrist
             return BitConverter.ToUInt64(buffer, 0);
         }
     }
-    public static class StringExtensions
+    public static class Extensions
     {
         public static string MakeAlphanumeric(this string text)
         {
             var s = text.Where(x => char.IsLetterOrDigit(x)).ToArray();
             return new string(s);
+        }
+        public static bool HasDigits(this string s)
+        {
+            for (int i = 0; i <= s.Length; i++)
+            {
+                if (char.IsDigit(s[i]))
+                    return true;
+            }
+            return false;
         }
     }
 }
