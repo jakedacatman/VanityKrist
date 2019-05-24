@@ -65,24 +65,28 @@ namespace VanityKrist
             Output.AppendText($"using {threads} threads" + "\n");
 
             Regex reg = null;
-            if (regex != string.Empty) reg = new Regex(regex);
+            if (term == string.Empty && regex != string.Empty) reg = new Regex(regex);
+
+                
 
             ulong perThread = (ulong.MaxValue - basepasswd) / (ulong)threads;
 
             var bp = basepasswd;
 
-            for (int i = 0; i < threads; i++)
+            if (string.IsNullOrEmpty(regex))
+                Output.AppendText("enter a term or regex");
+            else
             {
-                Output.AppendText($"spawned thread {i}, working from {NumToHex(bp)} to {NumToHex(bp + perThread)}" + "\n");
-
-                Task.Run(() => MinerThread(i, perThread, bp, reg, cts.Token), cts.Token);
-
-                bp += perThread;
+                for (int i = 0; i < threads; i++)
+                {
+                    Output.AppendText($"spawned thread {i}, working from {NumToHex(bp)} to {NumToHex(bp + perThread)}" + "\n");
+                    Task.Run(() => MinerThread(i, perThread, bp, reg, cts.Token), cts.Token);
+                    bp += perThread;
+                }
             }
             Output.AppendText("\n");
 
             Task.Run(() => UpdateCounter(cts.Token));
-            Task.Run(() => UpdateTime(cts.Token));
         }
 
         private void Stop_Click(object sender, EventArgs e)
@@ -108,20 +112,18 @@ namespace VanityKrist
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
 
-                var hex = NumToHex(curr);
-
-                var passwd = hex;
+                var passwd = NumToHex(curr);
 
                 var protein = new string[9];
 
-                var stick = Hash(Hash(passwd));
+                var stick = DoubleHash(passwd);
                 var link = 0;
                 var v2 = new StringBuilder();
                 var n = 0;
                 for (n = 0; n < 9; n++)
                 {
                     protein[n] = new string(new char[] { stick[0], stick[1] });
-                    stick = Hash(Hash(stick));
+                    stick = DoubleHash(stick);
                 }
                 n = 0;
 
@@ -131,7 +133,7 @@ namespace VanityKrist
                 {
                     var sub = stick.Substring(2 * n, 2);
                     link = Convert.ToInt32(sub, 16) % 9;
-                    if (link >= 0 && protein[link] != null && protein[link].Length != 0)
+                    if (!string.IsNullOrEmpty(protein[link]))
                     {
                         var by = 48 + Math.Floor(Convert.ToByte(protein[link], 16) / 7d);
                         v2.Append((char)(by + 39 > 122 ? 101 : by > 57 ? by + 39 : by));
@@ -142,30 +144,17 @@ namespace VanityKrist
                 }
                 var address = "k" + v2.ToString();
                 counter++;
-                if (term != string.Empty && address.Contains(term))
-                {
-                    if (check)
-                    {
-                        Write(id, address, passwd);
-                    }
-                    else if (!address.Any(x => char.IsDigit(x)))
-                    {
-                        if (term != string.Empty && address.Contains(term))
-                            Write(id, address, passwd);
-                        else if (reg != null)
-                        {
-                            var match = reg.Match(address);
-                            if (match.Success)
-                                Write(id, address, passwd);
-                        }
-                    }
-                }
-                else if (reg != null)
+                if (reg != null)
                 {
                     var match = reg.Match(address);
-                    if (match.Success)
-                        Write(id, address, passwd);
+                    if (!match.Success)
+                        continue;
                 }
+
+                if (!address.Contains(term) || address.Any(x => char.IsDigit(x)))
+                    continue;
+
+                Write(id, address, passwd);
             }
             return Task.CompletedTask;
         }
@@ -182,17 +171,8 @@ namespace VanityKrist
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
                 Addresses.Invoke(new Action(() => Addresses.Text = counter.ToString()));
+                MsPerA.Invoke(new Action(() => MsPerA.Text = Math.Round(1000d / counter, 5).ToString()));
                 counter = 0;
-                Thread.Sleep(1000);
-            }
-        }
-
-        private Task UpdateTime(CancellationToken token)
-        {
-            while (true)
-            {
-                if (token.IsCancellationRequested) return Task.CompletedTask;
-                MsPerA.Invoke(new Action(() => MsPerA.Text = Math.Round(1000d/counter, 5).ToString()));
                 Thread.Sleep(1000);
             }
         }
@@ -201,30 +181,26 @@ namespace VanityKrist
         {
             using (var h = SHA256.Create())
             {
-                return string.Join(string.Empty, h.ComputeHash(Encoding.UTF8.GetBytes(toHash)).Select(x => x.ToString("x2")));
+                var s = h.ComputeHash(Encoding.UTF8.GetBytes(toHash));
+                StringBuilder z =  new StringBuilder();
+                for (int i = 0; i < s.Length; i++)
+                {
+                    z.Append(s[i].ToString("x2"));
+                }
+                return z.ToString();
             }
+        }
+
+        private string DoubleHash(string toHash)
+        {
+            return Hash(Hash(toHash));
         }
 
         private string NumToHex(ulong num)
         {
-            /*
-            char[] hexChars = new char[16]
-            {
-                '0', '1', '2','3',
-                '4', '5', '6', '7',
-                '8', '9', 'a', 'b',
-                'c', 'd', 'e', 'f'
-            };
-
-            char[] gen = new char[16];
-            for (int i = 0; i < 16; i++)
-            {
-                gen[i] = hexChars[(num & 15ul * (ulong)Math.Pow(16, 15 - i)) >> (60 - (4 * i))];
-            }
-            return new string(gen);
-            */
-            return string.Format("0x{0:X}", num).Replace("0x", string.Empty).ToLower();
+            return $"{num:x}";
         }
+
         private static ulong RandUlong()
         {
             var r = new Random();
