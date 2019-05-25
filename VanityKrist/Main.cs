@@ -1,16 +1,14 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Security.Cryptography;
 using Serilog;
 using Serilog.Core;
+using OpenSSL.Crypto;
 
 namespace VanityKrist
 {
@@ -84,7 +82,7 @@ namespace VanityKrist
             {
                 for (int i = 0; i < threads; i++)
                 {
-                    SHA256 h = SHA256.Create();
+                    MessageDigestContext h = new MessageDigestContext(MessageDigest.SHA256);
                     Output.AppendText($"spawned thread {i}, working from {NumToHex(bp)} to {NumToHex(bp + perThread)}" + "\n");
                     Task.Run(() => MinerThread(i, perThread, bp, reg, h));
                     bp += perThread;
@@ -92,9 +90,10 @@ namespace VanityKrist
                 }
             }
             Output.AppendText("\n");
-
+            
             Task.Run(() => UpdateCounter(cts.Token));
         }
+
 
         private void Stop_Click(object sender, EventArgs e)
         {
@@ -102,25 +101,33 @@ namespace VanityKrist
         }
         private void StopIt()
         {
-            cts.Cancel();
-            cts = new CancellationTokenSource();
+            try
+            {
+                cts.Cancel();
+                cts = new CancellationTokenSource();
 
-            foreach (IDisposable h in hashes)
-                h.Dispose();
+                foreach (IDisposable h in hashes)
+                    h.Dispose();
 
-            Stop.Enabled = false;
-            Term.Enabled = true;
-            Threads.Enabled = true;
-            Start.Enabled = true;
-            Numbers.Enabled = true;
-            Regex.Enabled = true;
+                Stop.Enabled = false;
+                Term.Enabled = true;
+                Threads.Enabled = true;
+                Start.Enabled = true;
+                Numbers.Enabled = true;
+                Regex.Enabled = true;
 
-            basepasswd = RandUlong();
+                basepasswd = RandUlong();
+            }
+            catch (Exception e)
+            {
+                Output.AppendText($"{e.Message}: {e.StackTrace}\n");
+            }
+
         }
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = string.Empty;
 
-        private Task MinerThread(int id, ulong workSize, ulong basepasswd, Regex reg, SHA256 h)
+        private Task MinerThread(int id, ulong workSize, ulong basepasswd, Regex reg, MessageDigestContext h)
         {
             for (ulong curr = basepasswd; running && curr < (basepasswd + workSize); curr++)
             {
@@ -144,7 +151,7 @@ namespace VanityKrist
             return false;
         }
 
-        private string ToV2(string passwd, SHA256 h)
+        private string ToV2(string passwd, MessageDigestContext h)
         {
             var protein = new string[9];
             var stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(passwd), h));
@@ -168,7 +175,7 @@ namespace VanityKrist
                     protein[link] = string.Empty;
                     n++;
                 }
-                else stick = BytesToHex(h.ComputeHash(Encoding.UTF8.GetBytes(stick)));
+                else stick = BytesToHex(h.Digest(Encoding.UTF8.GetBytes(stick)));
             }
             return v2.ToString();
         }
@@ -216,9 +223,9 @@ namespace VanityKrist
             }
         }
 
-        private byte[] DoubleHash(byte[] input, SHA256 h)
+        private byte[] DoubleHash(byte[] input, MessageDigestContext h)
         {
-            return h.ComputeHash(Encoding.UTF8.GetBytes(BytesToHex(h.ComputeHash(input))));
+            return h.Digest(Encoding.UTF8.GetBytes(BytesToHex(h.Digest(input))));
         }
 
         private string NumToHex(ulong num)
