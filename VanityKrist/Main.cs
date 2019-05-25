@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Serilog;
 using Serilog.Core;
-using OpenSSL.Crypto;
+using System.Security.Cryptography;
 
 namespace VanityKrist
 {
@@ -101,6 +101,8 @@ namespace VanityKrist
             cts.Cancel();
             cts = new CancellationTokenSource();
 
+            running = false;
+
             Stop.Enabled = false;
             Term.Enabled = true;
             Threads.Enabled = true;
@@ -168,9 +170,9 @@ namespace VanityKrist
 
         private byte[] Hash(byte[] input)
         {
-            using (MessageDigestContext h = new MessageDigestContext(MessageDigest.SHA256))
+            using (SHA256 h = SHA256.Create())
             {
-                return h.Digest(input);
+                return h.ComputeHash(input);
             }
         }
 
