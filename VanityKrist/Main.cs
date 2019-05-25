@@ -125,50 +125,78 @@ namespace VanityKrist
             for (ulong curr = basepasswd; running && curr < (basepasswd + workSize); curr++)
             {
                 var passwd = NumToHex(curr);
+                var address = ToV2(passwd, h);
 
-                var protein = new string[9];
-
-                var stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(passwd), h));
-                var link = 0;
-                var v2 = new char[10];
-                int n;
-                for (n = 0; n < 9; n++)
-                {
-                    protein[n] = new string(new char[] { stick[0], stick[1] });
-                    stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(stick), h));
-                }
-                n = 0;
-                int i = 0;
-                while (n < 9)
-                {
-                    var sub = stick.Substring(2 * n, 2);
-                    link = Convert.ToInt32(sub, 16) % 9;
-                    if (!string.IsNullOrEmpty(protein[link]))
-                    {
-                        var by = 48 + Math.Floor(Convert.ToByte(protein[link], 16) / 7d);
-                        v2[i++] = ((char)(by + 39 > 122 ? 101 : by > 57 ? by + 39 : by));
-                        protein[link] = string.Empty;
-                        n++;
-                    }
-                    else stick = BytesToHex(h.ComputeHash(Encoding.UTF8.GetBytes(stick)));
-                }
-                var address = "k" + new string(v2);
                 counter++;
 
-                if (reg != null)
-                {
-                    var match = reg.Match(address);
-                    if (!match.Success)
-                        continue;
-                }
-
-                if (!address.Contains(term) || (!check && address.Any(x => char.IsDigit(x))))
+                if (!address.Contains(term) || (!check && HasNumbers(address)) || (reg != null && !reg.Match(address).Success))
                     continue;
 
                 Write(id, address, passwd);
             }
             return Task.CompletedTask;
         }
+
+        private bool HasNumbers(string input)
+        {
+            for (int i = 0; i < input.Length; i++)
+                if (char.IsDigit(input[i])) return true;
+            return false;
+        }
+
+        private string ToV2(string passwd, SHA256 h)
+        {
+            var protein = new string[9];
+            var stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(passwd), h));
+            int n;
+            for (n = 0; n < 9; n++)
+            {
+                protein[n] = string.Empty + stick[0] + stick[1];
+                stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(stick), h));
+            }
+            n = 0;
+            var v2 = new StringBuilder(10);
+            v2.Append('k');
+            int link;
+            while (n < 9)
+            {
+                link = Convert.ToInt32(string.Empty + stick[2 * n] + stick[2 * n + 1], 16) % 9;    
+                if (!string.IsNullOrEmpty(protein[link]))
+                {
+                    var by = Math.Floor(Convert.ToByte(protein[link], 16) / 7d);
+                    v2.Append(base36[(int)by]);
+                    protein[link] = string.Empty;
+                    n++;
+                }
+                else stick = BytesToHex(h.ComputeHash(Encoding.UTF8.GetBytes(stick)));
+            }
+            return v2.ToString();
+        }
+
+        private static readonly char[] base36 = new char[]
+        {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+            'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+            'u', 'v', 'w', 'x', 'y', 'z', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e',
+            'e', 'e', 'e', 'e', 'e', 'e', 'e', 'e'
+        };
 
         private void Write(int id, string address, string passwd)
         {
@@ -181,8 +209,8 @@ namespace VanityKrist
             while (true)
             {
                 if (token.IsCancellationRequested) return Task.CompletedTask;
-                Addresses.Invoke(new Action(() => Addresses.Text = counter.ToString()));
-                MsPerA.Invoke(new Action(() => MsPerA.Text = Math.Round(1000d / counter, 5).ToString()));
+                Addresses.Text = counter.ToString();
+                MsPerA.Text = Math.Round(1000d / counter, 5).ToString();
                 counter = 0;
                 Thread.Sleep(1000);
             }
