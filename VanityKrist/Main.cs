@@ -28,9 +28,12 @@ namespace VanityKrist
         private bool check = false;
         private string regex = string.Empty;
         private ulong basepasswd = RandUlong();
+        private List<IDisposable> hashes = new List<IDisposable>();
+        private List<long> times = new List<long>();
+        private bool running = false;
 
         private Logger l = new LoggerConfiguration()
-            .WriteTo.Async(x => x.File("output.txt", outputTemplate: "{Message:l}"))
+            .WriteTo.File("output.txt", outputTemplate: "{Message:l}")
             .CreateLogger();
 
         private CancellationTokenSource cts = new CancellationTokenSource();
@@ -60,6 +63,7 @@ namespace VanityKrist
             Numbers.Enabled = false;
             Stop.Enabled = true;
             Regex.Enabled = false;
+            running = true;
 
             Output.AppendText($"starting with base {NumToHex(basepasswd)}" + "\n");
             Output.AppendText($"using {threads} threads" + "\n");
@@ -67,21 +71,24 @@ namespace VanityKrist
             Regex reg = null;
             if (term == string.Empty && regex != string.Empty) reg = new Regex(regex);
 
-                
-
             ulong perThread = (ulong.MaxValue - basepasswd) / (ulong)threads;
 
             var bp = basepasswd;
 
-            if (string.IsNullOrEmpty(regex))
+            if (string.IsNullOrEmpty(term) && string.IsNullOrEmpty(regex))
+            {
                 Output.AppendText("enter a term or regex");
+                StopIt();
+            }
             else
             {
                 for (int i = 0; i < threads; i++)
                 {
+                    SHA256 h = SHA256.Create();
                     Output.AppendText($"spawned thread {i}, working from {NumToHex(bp)} to {NumToHex(bp + perThread)}" + "\n");
-                    Task.Run(() => MinerThread(i, perThread, bp, reg, cts.Token), cts.Token);
+                    Task.Run(() => MinerThread(i, perThread, bp, reg, h));
                     bp += perThread;
+                    hashes.Add(h);
                 }
             }
             Output.AppendText("\n");
@@ -91,8 +98,15 @@ namespace VanityKrist
 
         private void Stop_Click(object sender, EventArgs e)
         {
+            StopIt();
+        }
+        private void StopIt()
+        {
             cts.Cancel();
             cts = new CancellationTokenSource();
+
+            foreach (IDisposable h in hashes)
+                h.Dispose();
 
             Stop.Enabled = false;
             Term.Enabled = true;
@@ -106,28 +120,24 @@ namespace VanityKrist
 
         private void Clear_Click(object sender, EventArgs e) => Output.Text = string.Empty;
 
-        private Task MinerThread(int id, ulong workSize, ulong basepasswd, Regex reg, CancellationToken token)
+        private Task MinerThread(int id, ulong workSize, ulong basepasswd, Regex reg, SHA256 h)
         {
-            for (ulong curr = basepasswd; curr < (basepasswd + workSize); curr++)
+            for (ulong curr = basepasswd; running && curr < (basepasswd + workSize); curr++)
             {
-                if (token.IsCancellationRequested) return Task.CompletedTask;
-
                 var passwd = NumToHex(curr);
 
                 var protein = new string[9];
 
-                var stick = DoubleHash(passwd);
+                var stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(passwd), h));
                 var link = 0;
                 var v2 = new StringBuilder();
-                var n = 0;
+                int n;
                 for (n = 0; n < 9; n++)
                 {
                     protein[n] = new string(new char[] { stick[0], stick[1] });
-                    stick = DoubleHash(stick);
+                    stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(stick), h));
                 }
                 n = 0;
-
-                var t = protein.Length;
 
                 while (n < 9)
                 {
@@ -140,10 +150,11 @@ namespace VanityKrist
                         protein[link] = string.Empty;
                         n++;
                     }
-                    else stick = Hash(stick);
+                    else stick = BytesToHex(h.ComputeHash(Encoding.UTF8.GetBytes(stick)));
                 }
                 var address = "k" + v2.ToString();
                 counter++;
+
                 if (reg != null)
                 {
                     var match = reg.Match(address);
@@ -151,7 +162,7 @@ namespace VanityKrist
                         continue;
                 }
 
-                if (!address.Contains(term) || address.Any(x => char.IsDigit(x)))
+                if (!address.Contains(term) || (!check && address.Any(x => char.IsDigit(x))))
                     continue;
 
                 Write(id, address, passwd);
@@ -177,23 +188,9 @@ namespace VanityKrist
             }
         }
 
-        private string Hash(string toHash)
+        private byte[] DoubleHash(byte[] input, SHA256 h)
         {
-            using (var h = SHA256.Create())
-            {
-                var s = h.ComputeHash(Encoding.UTF8.GetBytes(toHash));
-                StringBuilder z =  new StringBuilder();
-                for (int i = 0; i < s.Length; i++)
-                {
-                    z.Append(s[i].ToString("x2"));
-                }
-                return z.ToString();
-            }
-        }
-
-        private string DoubleHash(string toHash)
-        {
-            return Hash(Hash(toHash));
+            return h.ComputeHash(Encoding.UTF8.GetBytes(BytesToHex(h.ComputeHash(input))));
         }
 
         private string NumToHex(ulong num)
@@ -207,6 +204,32 @@ namespace VanityKrist
             var buffer = new byte[sizeof(ulong)];
             r.NextBytes(buffer);
             return BitConverter.ToUInt64(buffer, 0);
+        }
+
+        private static readonly uint[] _lookup32 = CreateLookup32();
+
+        private static uint[] CreateLookup32()
+        {
+            var result = new uint[256];
+            for (int i = 0; i < 256; i++)
+            {
+                string s = i.ToString("x2");
+                result[i] = ((uint)s[0]) + ((uint)s[1] << 16);
+            }
+            return result;
+        }
+
+        private static string BytesToHex(byte[] bytes)
+        {
+            var lookup32 = _lookup32;
+            var result = new char[bytes.Length * 2];
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                var val = lookup32[bytes[i]];
+                result[2 * i] = (char)val;
+                result[2 * i + 1] = (char)(val >> 16);
+            }
+            return new string(result);
         }
     }
     public static class StringExtensions
