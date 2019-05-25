@@ -172,7 +172,7 @@ namespace VanityKrist
 
         private void Write(int id, string address, string passwd)
         {
-            Output.Invoke(new Action(() => Output.AppendText($"thread {id} found {address}, with pw {passwd}\n")));
+            lock (Output) { Output.AppendText($"thread {id} found {address}, with pw {passwd}\n"); };
             l.Information($"{address}:{passwd}\n");
         }
 
