@@ -130,7 +130,7 @@ namespace VanityKrist
 
                 var stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(passwd), h));
                 var link = 0;
-                var v2 = new StringBuilder();
+                var v2 = new char[10];
                 int n;
                 for (n = 0; n < 9; n++)
                 {
@@ -138,7 +138,7 @@ namespace VanityKrist
                     stick = BytesToHex(DoubleHash(Encoding.UTF8.GetBytes(stick), h));
                 }
                 n = 0;
-
+                int i = 0;
                 while (n < 9)
                 {
                     var sub = stick.Substring(2 * n, 2);
@@ -146,13 +146,13 @@ namespace VanityKrist
                     if (!string.IsNullOrEmpty(protein[link]))
                     {
                         var by = 48 + Math.Floor(Convert.ToByte(protein[link], 16) / 7d);
-                        v2.Append((char)(by + 39 > 122 ? 101 : by > 57 ? by + 39 : by));
+                        v2[i++] = ((char)(by + 39 > 122 ? 101 : by > 57 ? by + 39 : by));
                         protein[link] = string.Empty;
                         n++;
                     }
                     else stick = BytesToHex(h.ComputeHash(Encoding.UTF8.GetBytes(stick)));
                 }
-                var address = "k" + v2.ToString();
+                var address = "k" + new string(v2);
                 counter++;
 
                 if (reg != null)
@@ -198,9 +198,10 @@ namespace VanityKrist
             return $"{num:x}";
         }
 
+        private static readonly Random r = new Random();
+
         private static ulong RandUlong()
         {
-            var r = new Random();
             var buffer = new byte[sizeof(ulong)];
             r.NextBytes(buffer);
             return BitConverter.ToUInt64(buffer, 0);
